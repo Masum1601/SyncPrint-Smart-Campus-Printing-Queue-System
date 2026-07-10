@@ -24,6 +24,8 @@
 .DS_Store
 *.pem
 /data/print-requests.json
+/data/printsync.sqlite
+/data/uploads/
 
 # debug
 npm-debug.log*

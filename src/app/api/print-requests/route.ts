@@ -6,6 +6,8 @@ import {
 } from "@/lib/print-requests/store";
 import type { CreatePrintRequestInput } from "@/lib/print-requests/types";
 
+export const runtime = "nodejs";
+
 export async function GET() {
   const { userId } = await auth();
 
@@ -25,22 +27,32 @@ export async function POST(request: Request) {
   }
 
   const user = await currentUser();
-  const body = (await request.json()) as CreatePrintRequestInput;
+  const formData = await request.formData();
+  const documentFile = formData.get("document");
+  const printer = String(formData.get("printer") ?? "").trim();
+  const copies = Number(formData.get("copies") ?? 0);
+  const colorMode = String(formData.get("colorMode") ?? "").trim() as
+    CreatePrintRequestInput["colorMode"];
+  const duplex = String(formData.get("duplex") ?? "true") === "true";
 
-  if (!body.document?.trim()) {
-    return NextResponse.json({ error: "Document name is required." }, { status: 400 });
+  if (!(documentFile instanceof File) || documentFile.size === 0) {
+    return NextResponse.json({ error: "Document upload is required." }, { status: 400 });
   }
 
-  if (!body.printer?.trim()) {
+  if (!documentFile.name.toLowerCase().endsWith(".pdf")) {
+    return NextResponse.json({ error: "Only PDF uploads are supported." }, { status: 400 });
+  }
+
+  if (!printer) {
     return NextResponse.json({ error: "Printer selection is required." }, { status: 400 });
   }
 
-  if (!body.pages || body.pages < 1) {
-    return NextResponse.json({ error: "Pages must be at least 1." }, { status: 400 });
+  if (!copies || copies < 1) {
+    return NextResponse.json({ error: "Copies must be at least 1." }, { status: 400 });
   }
 
-  if (!body.copies || body.copies < 1) {
-    return NextResponse.json({ error: "Copies must be at least 1." }, { status: 400 });
+  if (colorMode !== "Black and white" && colorMode !== "Color") {
+    return NextResponse.json({ error: "Color mode is required." }, { status: 400 });
   }
 
   const ownerName =
@@ -49,7 +61,17 @@ export async function POST(request: Request) {
     user?.username ??
     "Student";
 
-  const printRequest = await createPrintRequest(body, userId, ownerName);
+  const printRequest = await createPrintRequest(
+    {
+      documentFile,
+      printer,
+      copies,
+      colorMode,
+      duplex,
+    },
+    userId,
+    ownerName,
+  );
 
   return NextResponse.json({ request: printRequest }, { status: 201 });
 }

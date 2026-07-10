@@ -14,6 +14,7 @@ import { UserProfileInfo } from "@/components/profile/UserProfileInfo";
 const navigation = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Print Job", href: "/print" },
+  { label: "My Requests", href: "/my-requests" },
   { label: "Queue Status", href: "/queue" },
   { label: "Locations", href: "/locations" },
 ];
@@ -45,7 +46,10 @@ export function SiteHeader() {
           <Logo />
           <nav className="hidden items-center gap-1 lg:flex">
             {navigation.map((item) => {
-              const active = pathname === item.href;
+              const active =
+                pathname === item.href ||
+                (item.href === "/my-requests" &&
+                  pathname.startsWith("/my-requests"));
 
               return (
                 <Link

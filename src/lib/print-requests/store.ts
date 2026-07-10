@@ -371,6 +371,30 @@ export async function getPrintRequestForUser(
   return request ? withLiveStatus(request) : null;
 }
 
+export async function listPrintRequests(): Promise<PrintRequest[]> {
+  const requests = await readAll();
+
+  return requests
+    .map(withLiveStatus)
+    .sort(
+      (left, right) =>
+        new Date(right.submittedAt).getTime() -
+        new Date(left.submittedAt).getTime(),
+    );
+}
+
+export async function deletePrintRequest(id: string): Promise<boolean> {
+  const requests = await readAll();
+  const remainingRequests = requests.filter((request) => request.id !== id);
+
+  if (remainingRequests.length === requests.length) {
+    return false;
+  }
+
+  await writeAll(remainingRequests);
+  return true;
+}
+
 export async function createPrintRequest(
   input: CreatePrintRequestInput,
   userId: string,

@@ -3,12 +3,13 @@
 import {
   Show,
   SignInButton,
+  SignOutButton,
   SignUpButton,
-  UserButton,
 } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { UserProfileInfo } from "@/components/profile/UserProfileInfo";
 
 const navigation = [
   { label: "Dashboard", href: "/dashboard" },
@@ -87,7 +88,15 @@ export function SiteHeader() {
             >
               New print job
             </Link>
-            <UserButton />
+            <UserProfileInfo />
+            <SignOutButton>
+              <button
+                type="button"
+                className="rounded-full px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-white"
+              >
+                Sign out
+              </button>
+            </SignOutButton>
           </Show>
         </div>
 
@@ -118,28 +127,32 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
-          <div className="mt-4 flex items-center gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+          <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
             <Show when="signed-out">
-              <SignInButton mode="modal">
-                <button className="flex-1 rounded-full border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-800 dark:border-zinc-800 dark:text-zinc-100">
-                  Sign in
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <button className="flex-1 rounded-full bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white">
-                  Sign up
-                </button>
-              </SignUpButton>
+              <div className="flex items-center gap-3">
+                <SignInButton mode="modal">
+                  <button className="flex-1 rounded-full border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-800 dark:border-zinc-800 dark:text-zinc-100">
+                    Sign in
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button className="flex-1 rounded-full bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white">
+                    Sign up
+                  </button>
+                </SignUpButton>
+              </div>
             </Show>
             <Show when="signed-in">
-              <Link
-                href="/print"
-                onClick={() => setIsOpen(false)}
-                className="flex-1 rounded-full bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
-              >
-                New print job
-              </Link>
-              <UserButton />
+              <div className="grid gap-3">
+                <UserProfileInfo variant="full" />
+                <Link
+                  href="/print"
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-full bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
+                >
+                  New print job
+                </Link>
+              </div>
             </Show>
           </div>
         </div>

@@ -6,26 +6,38 @@ export type PrintRequestStatus =
   | "Cancelled";
 
 export type CreatePrintRequestInput = {
-  document: string;
+  documentFile: File;
   printer: string;
-  pages: number;
   copies: number;
-  paperSize: string;
-  colorMode: string;
+  colorMode: "Black and white" | "Color";
   duplex: boolean;
-  priority: string;
-  notes: string;
-  estimate: number;
 };
 
-export type PrintRequest = CreatePrintRequestInput & {
+export type PrintRequest = {
   id: string;
   userId: string;
   ownerName: string;
+  document: string;
+  storedFileName: string;
+  storedFilePath: string;
+  pages: number;
+  estimate: number;
   printerLocation: string;
   status: PrintRequestStatus;
   progress: number;
   eta: string;
   submittedAt: string;
+  updatedAt: string;
+  printer: string;
+  copies: number;
+  colorMode: "Black and white" | "Color";
+  duplex: boolean;
+  printerRemainingPages?: number;
+  balanceUnitsRemaining?: number;
+};
+
+export type PrinterQueueItem = {
+  code: string;
+  remainingPages: number;
   updatedAt: string;
 };

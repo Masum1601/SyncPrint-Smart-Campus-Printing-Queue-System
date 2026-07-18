@@ -21,6 +21,9 @@ export type PrintRequest = {
   storedFileName: string;
   storedFilePath: string;
   pages: number;
+  paperSize: string;
+  priority: string;
+  notes?: string;
   estimate: number;
   printerLocation: string;
   status: PrintRequestStatus;

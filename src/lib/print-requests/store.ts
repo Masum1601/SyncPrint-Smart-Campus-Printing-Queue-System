@@ -70,6 +70,14 @@ function getInitialEta() {
   return "15 min";
 }
 
+function getDefaultPaperSize() {
+  return "A4";
+}
+
+function getDefaultPriority() {
+  return "Standard";
+}
+
 function calculatePriceUnits(
   pages: number,
   copies: number,
@@ -135,6 +143,9 @@ function withLiveStatus(request: PrintRequestRow): PrintRequest {
     printer: liveRequest.printer,
     pages: liveRequest.pages,
     copies: liveRequest.copies,
+    paperSize: getDefaultPaperSize(),
+    priority: getDefaultPriority(),
+    notes: undefined,
     colorMode: liveRequest.color_mode,
     duplex: Boolean(liveRequest.duplex),
     estimate: liveRequest.estimate,
@@ -148,6 +159,8 @@ function withLiveStatus(request: PrintRequestRow): PrintRequest {
 }
 
 async function getDatabase(): Promise<DatabaseClient> {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+
   databasePromise ??= open({
     filename: DB_FILE,
     driver: sqlite3.Database,
@@ -281,6 +294,38 @@ async function readAllPrintRequests(): Promise<PrintRequestRow[]> {
   return rows;
 }
 
+async function readPrintRequestRow(
+  database: DatabaseClient,
+  id: string,
+): Promise<PrintRequestRow | undefined> {
+  return database.get<PrintRequestRow>(
+    `
+      SELECT
+        id,
+        user_id,
+        owner_name,
+        document,
+        stored_file_name,
+        stored_file_path,
+        printer,
+        pages,
+        copies,
+        color_mode,
+        duplex,
+        estimate,
+        printer_location,
+        status,
+        progress,
+        eta,
+        submitted_at,
+        updated_at
+      FROM print_requests
+      WHERE id = ?
+    `,
+    id,
+  );
+}
+
 function fromUnits(balanceUnits: number) {
   return balanceUnits / 2;
 }
@@ -372,7 +417,7 @@ export async function getPrintRequestForUser(
 }
 
 export async function listPrintRequests(): Promise<PrintRequest[]> {
-  const requests = await readAll();
+  const requests = await readAllPrintRequests();
 
   return requests
     .map(withLiveStatus)
@@ -384,14 +429,22 @@ export async function listPrintRequests(): Promise<PrintRequest[]> {
 }
 
 export async function deletePrintRequest(id: string): Promise<boolean> {
-  const requests = await readAll();
-  const remainingRequests = requests.filter((request) => request.id !== id);
+  const database = await getDatabase();
+  const request = await readPrintRequestRow(database, id);
 
-  if (remainingRequests.length === requests.length) {
+  if (!request) {
     return false;
   }
 
-  await writeAll(remainingRequests);
+  await database.run(
+    `
+      DELETE FROM print_requests
+      WHERE id = ?
+    `,
+    id,
+  );
+
+  await fs.unlink(request.stored_file_path).catch(() => undefined);
   return true;
 }
 
@@ -533,6 +586,9 @@ export async function createPrintRequest(
       printer: input.printer,
       pages,
       copies: input.copies,
+      paperSize: getDefaultPaperSize(),
+      priority: getDefaultPriority(),
+      notes: undefined,
       colorMode: input.colorMode,
       duplex: input.duplex,
       estimate,
